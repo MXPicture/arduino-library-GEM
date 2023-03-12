@@ -138,6 +138,58 @@ class GEM_u8g2 {
     boolean readyForKey();                               // Check that menu is waiting for the key press
     void registerKeyPress(byte keyCode);                 // Register the key press and trigger corresponding action
                                                          // Accepts GEM_KEY_NONE, GEM_KEY_UP, GEM_KEY_RIGHT, GEM_KEY_DOWN, GEM_KEY_LEFT, GEM_KEY_CANCEL, GEM_KEY_OK values
+  
+    /* ADDITIONAL READY-ONLY FIELDS */
+    inline GEMPage* getCurrentPage() { return this->_menuPageCurrent; };
+    inline boolean isEditValueMode() { return this->_editValueMode; };
+    inline byte getEditValueCursorPosition() { return this->_editValueCursorPosition; };
+    inline byte getEditValueVirtualCursorPosition() { return this->_editValueVirtualCursorPosition; };
+    
+    inline byte getNextEditValueCursorPosition() {
+        byte value = this->getEditValueCursorPosition();
+
+        if ((value != _menuItemValueLength - 1)
+            && (value != _editValueLength - 1)
+            && (_valueString[value] != '\0')) {
+
+            value++;
+        }
+        return value;
+    };
+
+    inline byte getPrevEditValueCursorPosition() {
+        byte value = this->getEditValueCursorPosition();
+        if (value != 0) value--;
+        return value;
+    };
+
+    inline byte getNextEditValueVirtualCursorPosition() {
+        byte value = this->getEditValueVirtualCursorPosition();
+
+        if ((value != _editValueLength - 1)
+            && (_valueString[value] != '\0')) value++;
+
+        return value;
+    };
+
+    inline byte getPrevEditValueVirtualCursorPosition() {
+        byte value = this->getEditValueVirtualCursorPosition();
+        if (value != 0) value--;
+        return value;
+    };
+
+    inline byte getEditValueType() { return this->_editValueType; };
+
+    inline bool isEditValueTypeInteger() { return (this->_editValueType == GEM_VAL_INTEGER); };
+    inline bool isEditValueTypeByte() { return (this->_editValueType == GEM_VAL_BYTE); };
+    inline bool isEditValueTypeChar() { return (this->_editValueType == GEM_VAL_CHAR); };
+    inline bool isEditValueTypeBoolean() { return (this->_editValueType == GEM_VAL_BOOLEAN); };
+    inline bool isEditValueTypeSelect() { return (this->_editValueType == GEM_VAL_SELECT); };
+    inline bool isEditValueTypeFloat() { return (this->_editValueType == GEM_VAL_FLOAT); };
+    inline bool isEditValueTypeDouble() { return (this->_editValueType == GEM_VAL_DOUBLE); };
+
+    inline byte getEditValueLength() { return this->_editValueLength; };
+
   private:
     U8G2& _u8g2;
     byte _menuPointerType;
