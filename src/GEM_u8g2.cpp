@@ -704,22 +704,14 @@ void GEM_u8g2::initEditValueCursor() {
 }
 
 void GEM_u8g2::nextEditValueCursorPosition() {
-  if ((_editValueCursorPosition != getMenuItemValueLength() - 1) && (_editValueCursorPosition != _editValueLength - 1) && (_valueString[_editValueCursorPosition] != '\0')) {
-    _editValueCursorPosition++;
-  }
-  if ((_editValueVirtualCursorPosition != _editValueLength - 1) && (_valueString[_editValueVirtualCursorPosition] != '\0')) {
-    _editValueVirtualCursorPosition++;
-  }
+  this->_editValueCursorPosition = this->getNextEditValueCursorPosition();
+  this->_editValueVirtualCursorPosition = this->getNextEditValueVirtualCursorPosition();
   drawMenu();
 }
 
 void GEM_u8g2::prevEditValueCursorPosition() {
-  if (_editValueCursorPosition != 0) {
-    _editValueCursorPosition--;
-  }
-  if (_editValueVirtualCursorPosition != 0) {
-    _editValueVirtualCursorPosition--;
-  }
+  this->_editValueCursorPosition = this->getPrevEditValueCursorPosition();
+  this->_editValueVirtualCursorPosition = this->getPrevEditValueVirtualCursorPosition();
   drawMenu();
 }
 
