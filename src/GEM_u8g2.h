@@ -156,7 +156,7 @@ class GEM_u8g2 {
     inline byte getNextEditValueCursorPosition() {
         byte value = this->getEditValueCursorPosition();
 
-        if ((value != _menuItemValueLength - 1)
+        if ((value != this->getMenuItemValueLength() - 1)
             && (value != _editValueLength - 1)
             && (_valueString[value] != '\0')) {
 
