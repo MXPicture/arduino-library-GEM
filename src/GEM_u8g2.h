@@ -198,6 +198,9 @@ class GEM_u8g2 {
 
     inline byte getEditValueLength() { return this->_editValueLength; };
 
+    inline void useTextYOffset(bool use = true) { this->_useTextYOffset = use; }
+    inline byte getTextYOffset() { return this->_useTextYOffset ? _menuItemFont[getMenuItemFontSize()].height : 0; }
+
   protected:
     U8G2& _u8g2;
     GEMAppearance* _appearanceCurrent = nullptr;
@@ -213,6 +216,8 @@ class GEM_u8g2 {
     Splash _splash;
     uint16_t _splashDelay = 1000;
     bool _enableVersion = true;
+
+    bool _useTextYOffset = false;
 
     /* DRAW OPERATIONS */
 

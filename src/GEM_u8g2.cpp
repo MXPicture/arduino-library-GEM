@@ -349,7 +349,7 @@ GEM_u8g2& GEM_u8g2::removeDrawMenuCallback() {
 
 void GEM_u8g2::drawTitleBar() {
  _u8g2.setFont(_fontFamilies.small);
- _u8g2.setCursor(5, 0);
+ _u8g2.setCursor(5, getTextYOffset());
  _u8g2.print(_menuPageCurrent->title);
  _u8g2.setFont(getMenuItemFontSize() ? _fontFamilies.small : _fontFamilies.big);
 }
@@ -418,7 +418,7 @@ void GEM_u8g2::printMenuItems() {
   byte i = 0;
   char valueStringTmp[GEM_STR_LEN];
   while (menuItemTmp != nullptr && i < menuItemsPerScreen) {
-    byte yText = y + getMenuItemInsetOffset();
+    byte yText = y + getMenuItemInsetOffset() + getTextYOffset();
     byte yDraw = y + getMenuItemInsetOffset(true);
     switch (menuItemTmp->type) {
       case GEM_ITEM_VAL:
