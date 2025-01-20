@@ -14,7 +14,7 @@
   For documentation visit:
   https://github.com/Spirik/GEM
 
-  Copyright (c) 2018-2024 Alexander 'Spirik' Spiridonov
+  Copyright (c) 2018-2025 Alexander 'Spirik' Spiridonov
 
   This file is part of GEM library.
 
@@ -480,6 +480,54 @@ void GEM_u8g2::printMenuItems() {
                 }
               }
               break;
+            #ifdef GEM_SUPPORT_SPINNER
+            case GEM_VAL_SPINNER:
+              {
+                GEMSpinner* spinner = menuItemTmp->spinner;
+                if (_editValueMode && menuItemTmp == _menuPageCurrent->getCurrentMenuItem()) {
+                  GEMSpinnerValue valueTmp = spinner->getOptionNameByIndex(menuItemTmp->linkedVariable, _valueSelectNum);
+                  switch (spinner->getType()) {
+                    case GEM_VAL_BYTE:
+                      itoa(valueTmp.valByte, valueStringTmp, 10);
+                      break;
+                    case GEM_VAL_INTEGER:
+                      itoa(valueTmp.valInt, valueStringTmp, 10);
+                      break;
+                    #ifdef GEM_SUPPORT_FLOAT_EDIT
+                    case GEM_VAL_FLOAT:
+                      dtostrf(valueTmp.valFloat, menuItemTmp->precision + 1, menuItemTmp->precision, valueStringTmp);
+                      break;
+                    case GEM_VAL_DOUBLE:
+                      dtostrf(valueTmp.valDouble, menuItemTmp->precision + 1, menuItemTmp->precision, valueStringTmp);
+                      break;
+                    #endif
+                  }
+                  printMenuItemValue(valueStringTmp);
+                  _u8g2.drawXBMP(_u8g2.getDisplayWidth() - 7, yDraw, selectArrows_width, selectArrows_height, selectArrows_bits);
+                  drawEditValueCursor();
+                } else {
+                  switch (spinner->getType()) {
+                    case GEM_VAL_BYTE:
+                      itoa(*(byte*)menuItemTmp->linkedVariable, valueStringTmp, 10);
+                      break;
+                    case GEM_VAL_INTEGER:
+                      itoa(*(int*)menuItemTmp->linkedVariable, valueStringTmp, 10);
+                      break;
+                    #ifdef GEM_SUPPORT_FLOAT_EDIT
+                    case GEM_VAL_FLOAT:
+                      dtostrf(*(float*)menuItemTmp->linkedVariable, menuItemTmp->precision + 1, menuItemTmp->precision, valueStringTmp);
+                      break;
+                    case GEM_VAL_DOUBLE:
+                      dtostrf(*(double*)menuItemTmp->linkedVariable, menuItemTmp->precision + 1, menuItemTmp->precision, valueStringTmp);
+                      break;
+                    #endif
+                  }
+                  printMenuItemValue(valueStringTmp);
+                  _u8g2.drawXBMP(_u8g2.getDisplayWidth() - 7, yDraw, selectArrows_width, selectArrows_height, selectArrows_bits);
+                }
+              }
+              break;
+            #endif
             #ifdef GEM_SUPPORT_FLOAT_EDIT
             case GEM_VAL_FLOAT:
               if (_editValueMode && menuItemTmp == _menuPageCurrent->getCurrentMenuItem()) {
@@ -516,7 +564,6 @@ void GEM_u8g2::printMenuItems() {
         _u8g2.drawXBMP(_u8g2.getDisplayWidth() - 8, yDraw, arrowRight_width, arrowRight_height, arrowRight_bits);
         break;
       case GEM_ITEM_BACK:
-        _u8g2.setCursor(11, yText);
         _u8g2.drawXBMP(5, yDraw, arrowLeft_width, arrowLeft_height, arrowLeft_bits);
         break;
       case GEM_ITEM_BUTTON:
@@ -664,6 +711,15 @@ void GEM_u8g2::enterEditValueMode() {
         initEditValueCursor();
       }
       break;
+    #ifdef GEM_SUPPORT_SPINNER
+    case GEM_VAL_SPINNER:
+      {
+        GEMSpinner* spinner = menuItemTmp->spinner;
+        _valueSelectNum = spinner->getSelectedOptionNum(menuItemTmp->linkedVariable);
+        initEditValueCursor();
+      }
+      break;
+    #endif
     #ifdef GEM_SUPPORT_FLOAT_EDIT
     case GEM_VAL_FLOAT:
       // sprintf(_valueString,"%.6f", *(float*)menuItemTmp->linkedVariable); // May work for non-AVR boards
@@ -686,12 +742,14 @@ void GEM_u8g2::checkboxToggle() {
   bool checkboxValue = *(bool*)menuItemTmp->linkedVariable;
   *(bool*)menuItemTmp->linkedVariable = !checkboxValue;
   if (menuItemTmp->callbackAction != nullptr) {
+    resetEditValueState(); // Explicitly reset edit value state to be more predictable before user-defined callback is called
     if (menuItemTmp->callbackWithArgs) {
       menuItemTmp->callbackActionArg(menuItemTmp->callbackData);
     } else {
       menuItemTmp->callbackAction();
     }
-    exitEditValue();
+    drawEditValueCursor();
+    drawMenu();
   } else {
     _editValueMode = false;
   }
@@ -720,7 +778,7 @@ void GEM_u8g2::drawEditValueCursor() {
   byte menuItemFontSize = getMenuItemFontSize();
   byte cursorLeftOffset = getCurrentAppearance()->menuValuesLeftOffset + _editValueCursorPosition * _menuItemFont[menuItemFontSize].width;
   _u8g2.setDrawColor(2);
-  if (_editValueType == GEM_VAL_SELECT) {
+  if (_editValueType == GEM_VAL_SELECT || _editValueType == GEM_VAL_SPINNER) {
     _u8g2.drawBox(cursorLeftOffset - 1, pointerPosition - 1, _u8g2.getDisplayWidth() - cursorLeftOffset - 1, getCurrentAppearance()->menuItemHeight + 1);
   } else {
     _u8g2.drawBox(cursorLeftOffset - 1, pointerPosition - 1, _menuItemFont[menuItemFontSize].width + 1, getCurrentAppearance()->menuItemHeight + 1);
@@ -917,6 +975,21 @@ void GEM_u8g2::prevEditValueSelect() {
   drawMenu();
 }
 
+#ifdef GEM_SUPPORT_SPINNER
+void GEM_u8g2::nextEditValueSpinner() {
+  GEMItem* menuItemTmp = _menuPageCurrent->getCurrentMenuItem();
+  GEMSpinner* spinner = menuItemTmp->spinner;
+  if (_valueSelectNum+1 < spinner->getLength()) {
+    _valueSelectNum++;
+  }
+  drawMenu();
+}
+
+void GEM_u8g2::prevEditValueSpinner() {
+  prevEditValueSelect();
+}
+#endif
+
 void GEM_u8g2::saveEditValue() {
   GEMItem* menuItemTmp = _menuPageCurrent->getCurrentMenuItem();
   switch (menuItemTmp->linkedType) {
@@ -935,6 +1008,14 @@ void GEM_u8g2::saveEditValue() {
         select->setValue(menuItemTmp->linkedVariable, _valueSelectNum);
       }
       break;
+    #ifdef GEM_SUPPORT_SPINNER
+    case GEM_VAL_SPINNER:
+      {
+        GEMSpinner* spinner = menuItemTmp->spinner;
+        spinner->setValue(menuItemTmp->linkedVariable, _valueSelectNum);
+      }
+      break;
+    #endif
     #ifdef GEM_SUPPORT_FLOAT_EDIT
     case GEM_VAL_FLOAT:
       *(float*)menuItemTmp->linkedVariable = atof(_valueString);
@@ -945,25 +1026,37 @@ void GEM_u8g2::saveEditValue() {
     #endif
   }
   if (menuItemTmp->callbackAction != nullptr) {
+    resetEditValueState(); // Explicitly reset edit value state to be more predictable before user-defined callback is called
     if (menuItemTmp->callbackWithArgs) {
       menuItemTmp->callbackActionArg(menuItemTmp->callbackData);
     } else {
       menuItemTmp->callbackAction();
     }
+    drawEditValueCursor();
+    drawMenu();
+  } else {
+    exitEditValue();
   }
-  exitEditValue();
 }
 
 void GEM_u8g2::cancelEditValue() {
   exitEditValue();
 }
 
-void GEM_u8g2::exitEditValue() {
+void GEM_u8g2::resetEditValueState() {
   memset(_valueString, '\0', GEM_STR_LEN - 1);
   _valueSelectNum = -1;
   _editValueMode = false;
+}
+
+void GEM_u8g2::exitEditValue() {
+  resetEditValueState();
   drawEditValueCursor();
   drawMenu();
+}
+
+bool GEM_u8g2::isEditMode() {
+  return _editValueMode;
 }
 
 // Trim leading/trailing whitespaces
@@ -1027,6 +1120,14 @@ void GEM_u8g2::dispatchKeyPress() {
         case GEM_KEY_UP:
           if (_editValueType == GEM_VAL_SELECT) {
             prevEditValueSelect();
+          #ifdef GEM_SUPPORT_SPINNER
+          } else if (_editValueType == GEM_VAL_SPINNER) {
+            if (_invertKeysDuringEdit) {
+              prevEditValueSpinner();
+            } else {
+              nextEditValueSpinner();
+            }
+          #endif
           } else if (_invertKeysDuringEdit) {
             prevEditValueDigit();
           } else {
@@ -1034,13 +1135,21 @@ void GEM_u8g2::dispatchKeyPress() {
           }
           break;
         case GEM_KEY_RIGHT:
-          if (_editValueType != GEM_VAL_SELECT) {
+          if (_editValueType != GEM_VAL_SELECT && _editValueType != GEM_VAL_SPINNER) {
             nextEditValueCursorPosition();
           }
           break;
         case GEM_KEY_DOWN:
           if (_editValueType == GEM_VAL_SELECT) {
             nextEditValueSelect();
+          #ifdef GEM_SUPPORT_SPINNER
+          } else if (_editValueType == GEM_VAL_SPINNER) {
+            if (_invertKeysDuringEdit) {
+              nextEditValueSpinner();
+            } else {
+              prevEditValueSpinner();
+            }
+          #endif
           } else if (_invertKeysDuringEdit) {
             nextEditValueDigit();
           } else {
@@ -1048,7 +1157,7 @@ void GEM_u8g2::dispatchKeyPress() {
           }
           break;
         case GEM_KEY_LEFT:
-          if (_editValueType != GEM_VAL_SELECT) {
+          if (_editValueType != GEM_VAL_SELECT && _editValueType != GEM_VAL_SPINNER) {
             prevEditValueCursorPosition();
           }
           break;
