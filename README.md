@@ -1,5 +1,5 @@
 
-![GEM](http://spirik.ru/downloads/misc/gem/gem-logo.svg)
+![GEM](http://spirik.ru/downloads/misc/gem/gem-logo-border-outline.svg)
 ===========
 
 GEM (a.k.a. *Good Enough Menu*) - Arduino library for creation of graphic multi-level menu with editable menu items, such as variables (supports `int`, `byte`, `float`, `double`, `bool`, `char[17]` data types) and option selects. User-defined callback function can be specified to invoke when menu item is saved.
@@ -7,7 +7,7 @@ GEM (a.k.a. *Good Enough Menu*) - Arduino library for creation of graphic multi-
 Supports buttons that can invoke user-defined actions and create action-specific context, which can have its own enter (setup) and exit callbacks as well as loop function.
 
 <p align="center">
-<img src="https://github.com/Spirik/GEM/wiki/images/party-hard-lcd_full-demo_p12_640x360_256c_mask.gif" width="640" height="360" alt="Party hard!" />
+<img src="https://github.com/Spirik/GEM/wiki/images/party-hard-lcd_full-demo_p12_640x360_256c_mask.gif" width="640" alt="Party hard!" />
 </p>
 
 Supports [AltSerialGraphicLCD](http://www.jasspa.com/serialGLCD.html) (since GEM ver. 1.0), [U8g2](https://github.com/olikraus/U8g2_Arduino) (since GEM ver. 1.1) and [Adafruit GFX](https://learn.adafruit.com/adafruit-gfx-graphics-library) (since GEM ver. 1.3) graphics libraries.
@@ -1182,7 +1182,7 @@ For more details on customization see corresponding section of the [wiki](https:
   > Keep this in mind if you are planning to use the same object in your own routines.
 
 * *GEM&* **reInit()**  
-  **Returns*: `GEM&`, or `GEM_u8g2&`, or `GEM_adafruit_gfx&`  
+  *Returns*: `GEM&`, or `GEM_u8g2&`, or `GEM_adafruit_gfx&`  
   Set GEM specific settings to their values, set initially in `init()` method. If you were working with AltSerialGraphicLCD, U8g2 or Adafruit GFX graphics in your own user-defined button action, it may be a good idea to call `reInit()` before drawing menu back to screen (generally in custom `context.exit()` routine). See [context](#gemcontext) for more details.
 
 * *GEM_adafruit_gfx&* **setTextSize(** _uint8_t_ size **)**  `Adafruit GFX version only`  
@@ -1362,6 +1362,11 @@ GEMPage menuPage(title[, parentMenuPage]);
   *Returns*: `GEMPage&`  
   Set index of currently focused menu item on this page (only visible items are counted).
 
+* *byte* **getItemsCount(** _bool_ total = false **)**  
+  *Accepts*: `bool`  
+  *Returns*: `byte`  
+  Get items count of the menu page, counting hidden ones (if **total** set to `true`, or `GEM_ITEMS_TOTAL`) or only visible (if **total** set to `false`, or `GEM_ITEMS_VISIBLE`).
+
 > **Note:** calls to methods that return a reference to the owning `GEMPage` object can be chained, e.g. `menuPageSettings.addMenuItem(menuItemInterval).addMenuItem(menuItemTempo).setParentMenuPage(menuPageMain);` (since GEM ver. 1.4.6).
 
 
@@ -1370,7 +1375,7 @@ GEMPage menuPage(title[, parentMenuPage]);
 
 ### GEMItem
 
-Menu item of the menu. Can represent editable or read-only variable of type `int`, `byte`, `float`, `double`, `bool`, `char[17]` (or `char[GEM_STR_LEN]`, to be exact); option select of type `int`, `byte`, `float`, `double`, `char[n]`; incremental spinner of type `int`, `byte`, `float`, `double`; link to another menu page; or button that can invoke user-defined actions and create action-specific context, which can have its own enter (setup) and exit callbacks as well as loop function. User-defined callback function can be specified to invoke when editable menu item is saved or option is selected. Exact definition of `GEMItem` object depends on its type.
+Menu item of the menu. Can represent editable or read-only variable of type `int`, `byte`, `float`, `double`, `bool`, `char[17]` (or `char[GEM_STR_LEN]`, to be exact); option select of type `int`, `byte`, `float`, `double`, `char[n]`; incremental spinner of type `int`, `byte`, `float`, `double`; non-interactive label; link to another menu page; or button that can invoke user-defined actions and create action-specific context, which can have its own enter (setup) and exit callbacks as well as loop function. User-defined callback function can be specified to invoke when editable menu item is saved or option is selected. Exact definition of `GEMItem` object depends on its type.
 
 > **Note:** support for editable variables (and spinner) of types `float` and `double` is optional. It is enabled by default, but can be disabled by editing [config.h](https://github.com/Spirik/GEM/blob/master/src/config.h) file that ships with the library. Disabling this feature may save considerable amount of program storage space (up to 10% on Arduino UNO R3). See [Floating-point variables](#floating-point-variables) for more details.
 
@@ -1487,6 +1492,16 @@ GEMItem menuItemSpinner(title, linkedVariable, spinner[, saveCallback[, callback
 
 > **Note:** you cannot specify both readonly mode and callback in the same constructor. However, you can set readonly mode for menu item with callback explicitly later using `GEMItem::setReadonly()` method.
 
+#### Label
+
+```cpp
+GEMItem menuItemLabel(title);
+```
+
+* **title**  
+  *Type*: `const char*`  
+  Title of the menu item displayed on the screen.
+
 #### Link to menu page
 
 ```cpp
@@ -1555,6 +1570,71 @@ GEMItem menuItemButton(title, buttonAction[, callbackVal[, readonly]]);
   *Value*: `17`  
   Alias for supported length of the string (character sequence) variable of type `char[GEM_STR_LEN]`. Note that this limits the length of the string that can be used with editable character menu item variable, but option select variable doesn't have this restriction. But you still have to make sure that in the latter case character array should be big enough to hold select option with the longest value to avoid overflows.
 
+* **GEM_ITEM_VAL**  
+  *Type*: macro `#define GEM_ITEM_VAL 0`  
+  *Value*: `0`  
+  Alias for menu item type that represents editable variable.
+
+* **GEM_ITEM_LINK**  
+  *Type*: macro `#define GEM_ITEM_LINK 1`  
+  *Value*: `1`  
+  Alias for menu item type that represents link to another menu page.
+
+* **GEM_ITEM_BACK**  
+  *Type*: macro `#define GEM_ITEM_BACK 2`  
+  *Value*: `2`  
+  Alias for menu item type that represents Back button (that links to parent level menu page).
+
+* **GEM_ITEM_BUTTON**  
+  *Type*: macro `#define GEM_ITEM_BUTTON 3`  
+  *Value*: `3`  
+  Alias for menu item type that represents button.
+
+* **GEM_ITEM_LABEL**  
+  *Type*: macro `#define GEM_ITEM_LABEL 4`  
+  *Value*: `4`  
+  Alias for menu item type that represents non-interactive menu item.
+
+* **GEM_VAL_INTEGER**  
+  *Type*: macro `#define GEM_VAL_INTEGER 0`  
+  *Value*: `0`  
+  Alias for `int` type of associated with menu item variable.
+
+* **GEM_VAL_BYTE**  
+  *Type*: macro `#define GEM_VAL_BYTE 1`  
+  *Value*: `1`  
+  Alias for `byte` type of associated with menu item variable.
+
+* **GEM_VAL_CHAR**  
+  *Type*: macro `#define GEM_VAL_CHAR 2`  
+  *Value*: `2`  
+  Alias for `char[n]` type of associated with menu item variable.
+
+* **GEM_VAL_BOOL**  
+  *Type*: macro `#define GEM_VAL_BOOL 3`  
+  *Value*: `3`  
+  Alias for `bool` type of associated with menu item variable.
+
+* **GEM_VAL_SELECT**  
+  *Type*: macro `#define GEM_VAL_SELECT 4`  
+  *Value*: `4`  
+  Associated variable is either of type `int`, `byte`, `char[n]`, `float` or `double` with option select used to pick a predefined value from the list.
+
+* **GEM_VAL_FLOAT**  
+  *Type*: macro `#define GEM_VAL_FLOAT 5`  
+  *Value*: `5`  
+  Alias for `float` type of associated with menu item variable.
+
+* **GEM_VAL_DOUBLE**  
+  *Type*: macro `#define GEM_VAL_DOUBLE 6`  
+  *Value*: `6`  
+  Alias for `double` type of associated with menu item variable.
+
+* **GEM_VAL_SPINNER**  
+  *Type*: macro `#define GEM_VAL_SPINNER 7`  
+  *Value*: `7`  
+  Associated variable is either of type `int`, `byte`, `float` or `double` with spinner to increment or decrement value with given step.
+
 #### Methods
 
 * *GEMItem&* **setCallbackVal(** _int_ | _byte_ | _float_ | _double_ | _bool_ | _const char*_ | _void*_ callbackVal **)**  
@@ -1572,6 +1652,16 @@ GEMItem menuItemButton(title, buttonAction[, callbackVal[, readonly]]);
 * *const char** **getTitle()**  
   *Returns*: `const char*`  
   Get title of the menu item.
+
+* *byte* **getLinkedType()**  
+  *Returns*: `byte`  
+  *Return values*: `GEM_VAL_INTEGER`, `GEM_VAL_BYTE`, `GEM_VAL_CHAR`, `GEM_VAL_BOOL`, `GEM_VAL_SELECT`, `GEM_VAL_FLOAT`, `GEM_VAL_DOUBLE`, `GEM_VAL_SPINNER`  
+  Get type of linked variable. Relevant for menu items of type `GEM_ITEM_VAL`. Value is undetermined otherwise.
+
+* *byte* **getType()**  
+  *Returns*: `byte`  
+  *Return values*: `GEM_ITEM_VAL`, `GEM_ITEM_LINK`, `GEM_ITEM_BACK`, `GEM_ITEM_BUTTON`  
+  Get type of menu item.
 
 * *GEMItem&* **setPrecision(** _byte_ prec **)**  
   *Accepts*: `byte`  
@@ -1612,6 +1702,14 @@ GEMItem menuItemButton(title, buttonAction[, callbackVal[, readonly]]);
 * *void** **getLinkedVariablePointer()**  
   *Returns*: `void*`  
   Get pointer to a linked variable (relevant for menu items that represent variable). Note that user is reponsible for casting `void*` pointer to a correct pointer type.
+
+* *GEMPage** **getParentPage()**  
+  *Returns*: `GEMPage*`  
+  Get pointer to menu page that holds this menu item.
+
+* *GEMPage** **getLinkedPage()**  
+  *Returns*: `GEMPage*`  
+  Get pointer to menu page that menu item of type `GEM_ITEM_LINK` or `GEM_ITEM_BACK` links to.
 
 * *GEMItem** **getMenuItemNext(** _bool_ total = false **)**  
   *Accepts*: `bool`  
@@ -2274,7 +2372,7 @@ When support for [Floating-point variables](#floating-point-variables) is enable
 
 Examples
 -----------
-GEM library comes with several annotated examples that will help you get familiar with it. More detailed info on the examples (including schematic and breadboard view where necessary) available in [wiki](https://github.com/Spirik/GEM/wiki).
+GEM library comes with several annotated examples that will help you get familiar with it. More detailed info on the examples (including schematic, breadboard view, simulations and optional custom shield implementation) available in [wiki](https://github.com/Spirik/GEM/wiki).
 
 License
 -----------
